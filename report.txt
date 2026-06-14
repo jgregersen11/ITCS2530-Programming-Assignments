@@ -1,4 +1,8 @@
 andor                    50             87.5 %         6/3/26         
 starsdfsdff              144            71.2 %         6/3/26         
 yamom                    999            11 %         6/3/26         
-djdjdd                   5              99.375 %         6/3/26
+djdjdd                   5              99.375 %         6/3/26      
+madagascar'              155            74.17 %        6/10/26        
+madagascar 2             180            64.00 %        6/10/26        
+starwars                 144            76.00 %        6/14/26        
+starwars                 150            70.00 %        6/14/26        
