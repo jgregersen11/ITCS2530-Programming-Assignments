@@ -1,281 +1,234 @@
 #include <iostream>
-#include <string> //added initialy so i coudl put spaces into what movie name
-#include <iomanip> // added for setprecision to cutoff decimal places
-#include <fstream> // added for output file
-#include <windows.h> // added for color
+#include <string>
+#include <iomanip>
+#include <fstream>
+#include <windows.h>
 using namespace std;
 
+enum Moviegenre { Classic = 1, action, comedy, Horror };
+
+// struct holds all info for one movie
+struct MovieSession {
+	string date;
+	string movieName;
+	double minutes;
+	int rating;
+	double score;
+	Moviegenre genre;
+};
+
+double findaverage(double values[], int size);
 void banner();
 int getchoice();
+bool fillSession(MovieSession& s);
 void dataentry();
-void savereport(string moviename, double minutes, double score, string date);
+void savereport(const MovieSession& s);
 void lastfivereport();
 void calculateaverage();
-
 int changecolor();
 void setColor(int colorCode);
 
 int main()
 {
-	int choice = 0; // Menue option 1,2,3
-	bool Continue; // bool to continue
+	int choice = 0;
 	int currentcolor = 7;
-	do { // do while to make menu continious
+	do { 
 		setColor(currentcolor);
 		banner();
 		choice = getchoice();
 
 		switch (choice) {
-		case 1: {
-			dataentry();	
-			break;
-
+		case 1: dataentry(); break;
+		case 2: lastfivereport(); break;
+		case 3: calculateaverage(); break;
+		case 4: currentcolor = changecolor(); setColor(currentcolor); break;
+		case 5: cout << "exiting program, adios!\n"; break;
+		default: cout << "Unrecognised input, go again\n"; break;
 		}
-		case 2: {
-			lastfivereport();
-			break;
-		}
-
-		case 3: {
-			calculateaverage();
-			break;
-		
-		}
-		case 4: {
-			currentcolor = changecolor();
-			setColor(currentcolor);
-			break;
-		}
-
-		case 5: {
-			cout << "exiting program, adios!\n";
-			break;
-		}
-		default: {
-			cout << "Unrecognised input, go again\n";
-			break;
-		}
-		}
-	} while (choice != 5); // end choice
-	
+	} while (choice != 5);
 
 	return 0;
 }
-void banner() {
-	cout << string(74, '-') << endl;
-	cout << "Welcome to the Movie Rating Database, Use the following options to begin. " << endl;
-	cout << "(1) Add to Database" << endl << "(2) Recent Additions" << endl << "(3) Lifetime Report" << endl << "(4) Edit Colors" <<endl  << "(5) Exit Menu" << endl;
 
+void banner() {
+	cout << string(50, '-') << endl;
+	cout << "Welcome to the Movie Rating Database" << endl;
+	cout << "(1) Add Movies  (2) Recent Additions  (3) Lifetime Report  (4) Edit Colors  (5) Exit" << endl;
 }
+
 int getchoice() {
 	cout << "Enter your choice: ";
-	int choice = 0; // Menue option 1,2,3
+	int choice = 0;
 	cin >> choice;
 	cin.ignore();
 	return choice;
-
 }
-void dataentry() {
-	string movie;
-	double time_watched;
-	int rating;
-	string date;
-	bool validdata;
-	int loopcount = 1;
-	cout << "how many submission do you want to add?" << endl;
 
-	cin >> loopcount;
+double findaverage(double values[], int size) {
+	double total = 0;
+	for (int i = 0; i < size; i++) total += values[i];
+	return total / size;
+}
+
+//collects and validates input from the user, where the struc is being used
+bool fillSession(MovieSession& s) {
+	cout << "Date of watch: ";
+	getline(cin, s.date);
+
+	cout << "Movie name: ";
+	getline(cin, s.movieName);
+
+	cout << "Movie Type\n1.Classic\n2.Action\n3.Comedy\n4.Horror\nChoice: ";
+	int typeChoice;
+	cin >> typeChoice;
+	s.genre = (Moviegenre)typeChoice;
+
+	cout << "Minutes: ";
+	cin >> s.minutes;
+
+	cout << "Rating (1-5): ";
+	cin >> s.rating;
 	cin.ignore();
-	for (int i = 1; i <= loopcount; i++) // conditional loop based on loopcount variable
-	{
-		validdata = true;
-		// begin gathering infromaiton from console
-		// grab movie name
-		cout << "Enter date of watch; 6/3/2026" << endl;
-		getline(cin, date);
-		cout << "What movie?" << endl;
-		getline(cin, movie); // so you can put spaces. ex, star wars  
-		// grabing minutes of movie, alos validation input type
-		cout << "How long was the movie in minutes?" << endl;
-		if (cin >> time_watched) {
-			cout << fixed << setprecision(2);
-			cout << time_watched << " minutes ty. " << endl;
-		}
-		else {
-			cout << "invalid input try again." << endl;
-			cin.clear();
-			validdata = false;
 
-		}
-		// grabing rating, and validate
-		cout << "Give a rating out of 5 stars?" << endl;
-
-		if (cin >> rating) {
-			cout << rating << " stars ty." << endl;
-			cin.ignore();
-		}
-		else {
-
-			cout << "invalid input try again" << endl;
-			validdata = false;
-
-		}
-		if (validdata == true) { // added for bool statement, only thing "new" to case 1
-
-			// this is my attempt at a "rotten meter", determins score from minutes watched and rating in stars
-			double score;
-			score = 100 - (time_watched / (rating + 1));
-			cout << "Based on time watched and rating, weve assigned a Movie Score of: " << score << endl;
-			// table formating for info gathered
-			cout << endl;
-			cout << left << setw(25) << "Movie"
-				<< left << setw(15) << "Minutes"
-				<< left << setw(12) << "Score"
-				<< left << setw(15) << "Date" << endl;
-
-			cout << string(67, '-') << endl;
-
-			cout << left << setw(25) << movie
-				<< left << setw(15) << time_watched
-				<< left << fixed << setprecision(2) << score << " % " << setw(7) << ""
-				<< left << setw(15) << date << endl;
-
-			cout << string(66, '-') << endl;
-			cout << endl;
-			savereport(movie, time_watched, score, date);
-
-		}
-		else {
-			cout << "error transpired" << endl;
-		}
+	
+	if (s.minutes > 0 && (s.rating >= 1 && s.rating <= 5)) {
+		s.score = 100 - (s.minutes / (s.rating + 1));
+		return true;
+	}
+	else {
+		cout << "Invalid minutes or rating." << endl;
+		return false;
 	}
 }
 
-void savereport(string moviename, double minutes, double score, string date) {
-	cout << "Attempting to Save Report..." << endl;
+void dataentry() {
+	const int MAXMOVIES = 5;
+	MovieSession sessions[MAXMOVIES];
+	int count = 0;
+	int loopcount;
+
+	cout << "How many movies to add? ";
+	cin >> loopcount;
+	while (loopcount < 1 || loopcount > MAXMOVIES) { 
+		cout << "Enter between 1 and " << MAXMOVIES << ": ";
+		cin >> loopcount;
+	}
+	cin.ignore();
+
+	for (int i = 0; i < loopcount; i++) {
+		MovieSession s;
+		if (fillSession(s)) {
+			switch (s.genre) {
+			case Classic: cout << "Classic Movie" << endl; break;
+			case action:  cout << "Action Movie" << endl; break;
+			case comedy:  cout << "Comedy Movie" << endl; break;
+			case Horror:  cout << "Horror Movie" << endl; break;
+			}
+			sessions[count] = s;
+			count++;
+			cout << "Score: " << fixed << setprecision(2) << s.score << " %" << endl;
+			savereport(s);
+		}
+	}
+
+	double minutesOnly[MAXMOVIES];
+	for (int i = 0; i < count; i++) minutesOnly[i] = sessions[i].minutes;
+	if (count > 0)
+		cout << "Average Length: " << fixed << setprecision(2)
+			<< findaverage(minutesOnly, count) << " minutes" << endl;
+}
+
+void savereport(const MovieSession& s) {
 	ofstream outputFile("report.txt", ios::app);
 	if (outputFile.is_open()) {
-		outputFile << left << setw(25) << moviename
-			<< left << setw(15) << minutes
-			<< left << fixed << setprecision(2) << score << " % " << setw(7) << ""
-			<< left << setw(15) << date << endl;
+		outputFile << left << setw(25) << s.movieName
+			<< left << setw(15) << s.minutes
+			<< left << fixed << setprecision(2) << s.score << " % " << setw(7) << ""
+			<< left << setw(15) << s.date << endl;
 		outputFile.close();
 		cout << "Saved report :)" << endl;
 	}
 	else {
-		cout << "Error transpired :(" << endl;
+		cout << "Error saving report." << endl;
 	}
 }
 
 void lastfivereport() {
-	string L1, L2, L3, L4, L5;
-	bool Continue = true;
-	cout << "Monthly Report opening..." << endl;
 	ifstream outputFile("report.txt");
-	if (outputFile.is_open()) {
-
-		if (getline(outputFile, L1) &&
-			getline(outputFile, L2) &&
-			getline(outputFile, L3) &&
-			getline(outputFile, L4) &&
-			getline(outputFile, L5)) {
-
-			Continue = true; // the sets up Continue Bool, if 5 line contain any string, then continue with report
-		}
-		else {
-			Continue = false; // if no 5 lines, then no continue.
-		}
-
-		if (Continue == true) {
-
-			cout << string(67, '-') << endl;
-			cout << left << setw(25) << "Movie"
-				<< left << setw(15) << "Minutes"
-				<< left << setw(12) << "Score"
-				<< left << setw(15) << "Date" << endl;
-			cout << string(67, '-') << endl; // header for next lines
-
-			cout << L1 << endl;
-			cout << L2 << endl;
-			cout << L3 << endl;
-			cout << L4 << endl;
-			cout << L5 << endl;
-
-			outputFile.close();
-			cout << "Report End" << endl;
-		}
-		else {
-			cout << "insuficient data to create report... " << endl;
-		}
-
-	}
-	else {
-		cout << "Error transpired :(" << endl;
-	}
-}
-void calculateaverage() {
-	cout << "calculating Averages..." << endl;
-	ifstream outputFile("report.txt");
+	string line;
+	int count = 0;
 
 	if (outputFile.is_open()) {
-
-		string n1; // name    
-		string d1; // date
-		double m1; // minute
-		double s1; // score
-		string percent; // this is here because in my file the % was filling into the next variable
-
-		double totalmin = 0;
-		double totalscore = 0;
-		int moviecount = 0;
-
-		while (outputFile >> n1 >> m1 >> s1 >> percent >> d1) { // this goes line for line collectig each item in report, ends after no line to read
-			totalmin += m1;
-			totalscore += s1;
-			moviecount++;
+		cout << left << setw(25) << "Movie" << setw(15) << "Minutes" << setw(12) << "Score" << setw(15) << "Date" << endl;
+		while (getline(outputFile, line) && count < 5) {
+			cout << line << endl;
+			count++;
 		}
-
-		double avgminutes = totalmin / moviecount;
-		double avgscore = totalscore / moviecount;
-		cout << "Average Minutes " << fixed << setprecision(2) << avgminutes << " mins" << endl;
-		cout << "Average Score " << fixed << setprecision(2) << avgscore << "%" << endl;
 		outputFile.close();
 	}
 	else {
-		cout << "error, Statistic report requires 5 points of data, run report 2 first?" << endl;
+		cout << "No report found yet." << endl;
+	}
+}
+
+void calculateaverage() {
+	ifstream outputFile("report.txt");
+	if (!outputFile.is_open()) {
+		cout << "No report found yet." << endl;
+		return;
 	}
 
+	string name, date, percent;
+	double minutes, score;
+	double totalMin = 0, totalScore = 0;
+	int count = 0;
+
+	while (outputFile >> name >> minutes >> score >> percent >> date) {
+		totalMin += minutes;
+		totalScore += score;
+		count++;
+	}
+	outputFile.close();
+
+	if (count == 0) {
+		cout << "No data yet." << endl;
+		return;
+	}
+
+	double avgMin = totalMin / count;
+	double avgScore = totalScore / count;
+	cout << fixed << setprecision(2);
+	cout << "Average Minutes: " << avgMin << endl;
+	cout << "Average Score: " << avgScore << "%" << endl;
+
+	if (avgScore >= 70 && avgMin <= 150) {
+		cout << "Great, well-paced movies overall!" << endl;
+	}
+	else if (avgScore < 50 || avgMin > 180) {
+		cout << "Your picks are running long or scoring low." << endl;
+	}
+	else {
+		cout << "Decent mix of movies." << endl;
+	}
 }
+
 int changecolor() {
-	int colorSelection = 0;
+	cout << "1.White 2.Green 3.Blue 4.Yellow 5.Red\nChoice: ";
+	int choice;
+	cin >> choice;
+	cin.ignore();
 
-	cout << "\n--- Select a Console Text Color ---" << endl;
-	cout << "(1) White" << endl;
-	cout << "(2) Green" << endl;
-	cout << "(3) Blue" << endl;
-	cout << "(4) Yellow" << endl;
-	cout << "(5) Red" << endl;
-	cout << "Enter your choice (1-5): ";
-	cin >> colorSelection;
-	cin.ignore(); // Clear the newline character from the buffer
-
-	
-	switch (colorSelection) {
-	case 1:  return 7;  // Light Gray / White (Default)
-	case 2:  return 2;  // Green
-	case 3:  return 11; // Light Cyan
-	case 4:  return 6;  // Yellow
-	case 5:  return 4;  // Red
-	default:
-		cout << "Invalid choice! Keeping default color." << endl;
-		return 7;       // Fallback to default
+	switch (choice) {
+	case 1: return 7;
+	case 2: return 2;
+	case 3: return 11;
+	case 4: return 6;
+	case 5: return 4;
+	default: return 7;
 	}
 }
 
-
-void setColor(int colorCode) { // google gemini helped me with this
-	// Gets a handle to the console window
+void setColor(int colorCode) {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	// Changes the text attributes to your number code
 	SetConsoleTextAttribute(hConsole, colorCode);
 }
