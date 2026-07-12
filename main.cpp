@@ -1,281 +1,255 @@
 #include <iostream>
-#include <string> //added initialy so i coudl put spaces into what movie name
-#include <iomanip> // added for setprecision to cutoff decimal places
-#include <fstream> // added for output file
-#include <windows.h> // added for color
+#include <string>
+#include <iomanip>
+#include <fstream>
+#include <windows.h>
 using namespace std;
 
+enum Moviegenre { Classic = 1, action, comedy, Horror };
+
+// struct holds all info for one movie
+struct MovieSession {
+	string date;
+	string movieName;
+	double minutes;
+	int rating;
+	double score;
+	Moviegenre genre;
+};
+
+double findaverage(double values[], int size);
 void banner();
 int getchoice();
-void dataentry();
-void savereport(string moviename, double minutes, double score, string date);
-void lastfivereport();
 void calculateaverage();
-
 int changecolor();
 void setColor(int colorCode);
+//new class that now holds functions and data for the movie tracker
+class MovieTracker {
+private:
+	static const int MAXMOVIES = 5;
+	MovieSession sessions[MAXMOVIES];
+	int sessionCount;
 
+public:
+	MovieTracker() {
+		sessionCount = 0; 
+	}
+
+	void showMenu();
+	void addSession();
+	void showReport() const;
+	void saveReportToFile(const string& filename) const;
+	double computeAverageDuration() const;
+};
+//main function got significantly smaller
 int main()
 {
-	int choice = 0; // Menue option 1,2,3
-	bool Continue; // bool to continue
+	MovieTracker tracker;
+	tracker.showMenu();
+	return 0;
+}
+
+void MovieTracker::showMenu() {
+	int choice = 0;
 	int currentcolor = 7;
-	do { // do while to make menu continious
+	do { 
 		setColor(currentcolor);
 		banner();
 		choice = getchoice();
 
 		switch (choice) {
-		case 1: {
-			dataentry();	
-			break;
-
+		case 1: addSession(); break;
+		case 2: showReport(); break;
+		case 3: calculateaverage(); break;
+		case 4: currentcolor = changecolor(); setColor(currentcolor); break;
+		case 5: cout << "exiting program, adios!\n"; break;
+		default: cout << "Unrecognised input, go again\n"; break;
 		}
-		case 2: {
-			lastfivereport();
-			break;
-		}
+	} while (choice != 5);
+}
 
-		case 3: {
-			calculateaverage();
-			break;
+void MovieTracker::addSession() {
+	if (sessionCount >= MAXMOVIES) {
+		cout << "Storage full, check the Lifetime Report instead." << endl;
+		return;
+	}
+
+	int addCount;
+	cout << "How many movies do you want to add? (up to " << MAXMOVIES - sessionCount << ")" << endl;
+	cin >> addCount;
+	while (addCount < 1 || addCount > MAXMOVIES - sessionCount) { 
+		cout << "Enter between 1 and " << MAXMOVIES - sessionCount << ": ";
+		cin >> addCount;
+	}
+	cin.ignore();
+
+	for (int i = 0; i < addCount; i++) { 
+		MovieSession m;
+
+		cout << "Enter date of watch (ex 6/3/2026): ";
+		getline(cin, m.date);
+
+		cout << "What movie? ";
+		getline(cin, m.movieName);
+
+		cout << "Movie Type\n1.Classic\n2.Action\n3.Comedy\n4.Horror\nChoice: ";
+		int typeChoice;
+		cin >> typeChoice;
+		m.genre = (Moviegenre)typeChoice;
+
+		cout << "How long was the movie in minutes? ";
+		cin >> m.minutes;
+
+		cout << "Rating out of 5 stars? ";
+		cin >> m.rating;
+		cin.ignore();
+
 		
-		}
-		case 4: {
-			currentcolor = changecolor();
-			setColor(currentcolor);
-			break;
-		}
+		if (m.minutes > 0 && (m.rating >= 1 && m.rating <= 5)) {
+			m.score = 100 - (m.minutes / (m.rating + 1));
 
-		case 5: {
-			cout << "exiting program, adios!\n";
-			break;
-		}
-		default: {
-			cout << "Unrecognised input, go again\n";
-			break;
-		}
-		}
-	} while (choice != 5); // end choice
-	
+			switch (m.genre) { 
+			case Classic: cout << "Classic Movie" << endl; break;
+			case action:  cout << "Action Movie" << endl; break;
+			case comedy:  cout << "Comedy Movie" << endl; break;
+			case Horror:  cout << "Horror Movie" << endl; break;
+			}
 
-	return 0;
-}
-void banner() {
-	cout << string(74, '-') << endl;
-	cout << "Welcome to the Movie Rating Database, Use the following options to begin. " << endl;
-	cout << "(1) Add to Database" << endl << "(2) Recent Additions" << endl << "(3) Lifetime Report" << endl << "(4) Edit Colors" <<endl  << "(5) Exit Menu" << endl;
-
-}
-int getchoice() {
-	cout << "Enter your choice: ";
-	int choice = 0; // Menue option 1,2,3
-	cin >> choice;
-	cin.ignore();
-	return choice;
-
-}
-void dataentry() {
-	string movie;
-	double time_watched;
-	int rating;
-	string date;
-	bool validdata;
-	int loopcount = 1;
-	cout << "how many submission do you want to add?" << endl;
-
-	cin >> loopcount;
-	cin.ignore();
-	for (int i = 1; i <= loopcount; i++) // conditional loop based on loopcount variable
-	{
-		validdata = true;
-		// begin gathering infromaiton from console
-		// grab movie name
-		cout << "Enter date of watch; 6/3/2026" << endl;
-		getline(cin, date);
-		cout << "What movie?" << endl;
-		getline(cin, movie); // so you can put spaces. ex, star wars  
-		// grabing minutes of movie, alos validation input type
-		cout << "How long was the movie in minutes?" << endl;
-		if (cin >> time_watched) {
-			cout << fixed << setprecision(2);
-			cout << time_watched << " minutes ty. " << endl;
+			sessions[sessionCount] = m;
+			sessionCount++;
+			cout << "Score: " << fixed << setprecision(2) << m.score << " %" << endl;
 		}
 		else {
-			cout << "invalid input try again." << endl;
-			cin.clear();
-			validdata = false;
-
-		}
-		// grabing rating, and validate
-		cout << "Give a rating out of 5 stars?" << endl;
-
-		if (cin >> rating) {
-			cout << rating << " stars ty." << endl;
-			cin.ignore();
-		}
-		else {
-
-			cout << "invalid input try again" << endl;
-			validdata = false;
-
-		}
-		if (validdata == true) { // added for bool statement, only thing "new" to case 1
-
-			// this is my attempt at a "rotten meter", determins score from minutes watched and rating in stars
-			double score;
-			score = 100 - (time_watched / (rating + 1));
-			cout << "Based on time watched and rating, weve assigned a Movie Score of: " << score << endl;
-			// table formating for info gathered
-			cout << endl;
-			cout << left << setw(25) << "Movie"
-				<< left << setw(15) << "Minutes"
-				<< left << setw(12) << "Score"
-				<< left << setw(15) << "Date" << endl;
-
-			cout << string(67, '-') << endl;
-
-			cout << left << setw(25) << movie
-				<< left << setw(15) << time_watched
-				<< left << fixed << setprecision(2) << score << " % " << setw(7) << ""
-				<< left << setw(15) << date << endl;
-
-			cout << string(66, '-') << endl;
-			cout << endl;
-			savereport(movie, time_watched, score, date);
-
-		}
-		else {
-			cout << "error transpired" << endl;
+			cout << "Invalid minutes or rating, entry skipped." << endl;
 		}
 	}
+
+	cout << fixed << setprecision(2)
+		<< "Average length so far: " << computeAverageDuration() << " minutes" << endl;
+	saveReportToFile("report.txt");
 }
 
-void savereport(string moviename, double minutes, double score, string date) {
-	cout << "Attempting to Save Report..." << endl;
-	ofstream outputFile("report.txt", ios::app);
+double MovieTracker::computeAverageDuration() const {
+	if (sessionCount == 0) return 0;
+	double minutesOnly[MAXMOVIES];
+	for (int i = 0; i < sessionCount; i++) minutesOnly[i] = sessions[i].minutes;
+	return findaverage(minutesOnly, sessionCount);
+}
+
+void MovieTracker::saveReportToFile(const string& filename) const {
+	ofstream outputFile(filename, ios::app);
 	if (outputFile.is_open()) {
-		outputFile << left << setw(25) << moviename
-			<< left << setw(15) << minutes
-			<< left << fixed << setprecision(2) << score << " % " << setw(7) << ""
-			<< left << setw(15) << date << endl;
+		for (int i = 0; i < sessionCount; i++) {
+			outputFile << left << setw(25) << sessions[i].movieName
+				<< left << setw(15) << sessions[i].minutes
+				<< left << fixed << setprecision(2) << sessions[i].score << " % " << setw(7) << ""
+				<< left << setw(15) << sessions[i].date << endl;
+		}
 		outputFile.close();
 		cout << "Saved report :)" << endl;
 	}
 	else {
-		cout << "Error transpired :(" << endl;
+		cout << "Error saving report." << endl;
 	}
 }
 
-void lastfivereport() {
-	string L1, L2, L3, L4, L5;
-	bool Continue = true;
-	cout << "Monthly Report opening..." << endl;
+void MovieTracker::showReport() const {
 	ifstream outputFile("report.txt");
-	if (outputFile.is_open()) {
-
-		if (getline(outputFile, L1) &&
-			getline(outputFile, L2) &&
-			getline(outputFile, L3) &&
-			getline(outputFile, L4) &&
-			getline(outputFile, L5)) {
-
-			Continue = true; // the sets up Continue Bool, if 5 line contain any string, then continue with report
-		}
-		else {
-			Continue = false; // if no 5 lines, then no continue.
-		}
-
-		if (Continue == true) {
-
-			cout << string(67, '-') << endl;
-			cout << left << setw(25) << "Movie"
-				<< left << setw(15) << "Minutes"
-				<< left << setw(12) << "Score"
-				<< left << setw(15) << "Date" << endl;
-			cout << string(67, '-') << endl; // header for next lines
-
-			cout << L1 << endl;
-			cout << L2 << endl;
-			cout << L3 << endl;
-			cout << L4 << endl;
-			cout << L5 << endl;
-
-			outputFile.close();
-			cout << "Report End" << endl;
-		}
-		else {
-			cout << "insuficient data to create report... " << endl;
-		}
-
-	}
-	else {
-		cout << "Error transpired :(" << endl;
-	}
-}
-void calculateaverage() {
-	cout << "calculating Averages..." << endl;
-	ifstream outputFile("report.txt");
+	string line;
+	int count = 0;
 
 	if (outputFile.is_open()) {
-
-		string n1; // name    
-		string d1; // date
-		double m1; // minute
-		double s1; // score
-		string percent; // this is here because in my file the % was filling into the next variable
-
-		double totalmin = 0;
-		double totalscore = 0;
-		int moviecount = 0;
-
-		while (outputFile >> n1 >> m1 >> s1 >> percent >> d1) { // this goes line for line collectig each item in report, ends after no line to read
-			totalmin += m1;
-			totalscore += s1;
-			moviecount++;
+		cout << left << setw(25) << "Movie" << setw(15) << "Minutes" << setw(12) << "Score" << setw(15) << "Date" << endl;
+		while (getline(outputFile, line) && count < 5) { 
+			cout << line << endl;
+			count++;
 		}
-
-		double avgminutes = totalmin / moviecount;
-		double avgscore = totalscore / moviecount;
-		cout << "Average Minutes " << fixed << setprecision(2) << avgminutes << " mins" << endl;
-		cout << "Average Score " << fixed << setprecision(2) << avgscore << "%" << endl;
 		outputFile.close();
 	}
 	else {
-		cout << "error, Statistic report requires 5 points of data, run report 2 first?" << endl;
+		cout << "No report found yet." << endl;
+	}
+}
+
+void banner() {
+	cout << string(50, '-') << endl;
+	cout << "Welcome to the Movie Rating Database" << endl;
+	cout << "(1) Add Movies  (2) Recent Additions  (3) Lifetime Report  (4) Edit Colors  (5) Exit" << endl;
+}
+
+int getchoice() {
+	cout << "Enter your choice: ";
+	int choice = 0;
+	cin >> choice;
+	cin.ignore();
+	return choice;
+}
+
+double findaverage(double values[], int size) {
+	double total = 0;
+	for (int i = 0; i < size; i++) total += values[i];
+	return total / size;
+}
+
+void calculateaverage() {
+	ifstream outputFile("report.txt");
+	if (!outputFile.is_open()) {
+		cout << "No report found yet." << endl;
+		return;
 	}
 
-}
-int changecolor() {
-	int colorSelection = 0;
+	string name, date, percent;
+	double minutes, score;
+	double totalMin = 0, totalScore = 0;
+	int count = 0;
 
-	cout << "\n--- Select a Console Text Color ---" << endl;
-	cout << "(1) White" << endl;
-	cout << "(2) Green" << endl;
-	cout << "(3) Blue" << endl;
-	cout << "(4) Yellow" << endl;
-	cout << "(5) Red" << endl;
-	cout << "Enter your choice (1-5): ";
-	cin >> colorSelection;
-	cin.ignore(); // Clear the newline character from the buffer
+	while (outputFile >> name >> minutes >> score >> percent >> date) {
+		totalMin += minutes;
+		totalScore += score;
+		count++;
+	}
+	outputFile.close();
+
+	if (count == 0) {
+		cout << "No data yet." << endl;
+		return;
+	}
+
+	double avgMin = totalMin / count;
+	double avgScore = totalScore / count;
+	cout << fixed << setprecision(2);
+	cout << "Average Minutes: " << avgMin << endl;
+	cout << "Average Score: " << avgScore << "%" << endl;
 
 	
-	switch (colorSelection) {
-	case 1:  return 7;  // Light Gray / White (Default)
-	case 2:  return 2;  // Green
-	case 3:  return 11; // Light Cyan
-	case 4:  return 6;  // Yellow
-	case 5:  return 4;  // Red
-	default:
-		cout << "Invalid choice! Keeping default color." << endl;
-		return 7;       // Fallback to default
+	if (avgScore >= 70 && avgMin <= 150) {
+		cout << "Great, well-paced movies overall!" << endl;
+	}
+	else if (avgScore < 50 || avgMin > 180) {
+		cout << "Your picks are running long or scoring low." << endl;
+	}
+	else {
+		cout << "Decent mix of movies." << endl;
 	}
 }
 
+int changecolor() {
+	cout << "1.White 2.Green 3.Blue 4.Yellow 5.Red\nChoice: ";
+	int choice;
+	cin >> choice;
+	cin.ignore();
 
-void setColor(int colorCode) { // google gemini helped me with this
-	// Gets a handle to the console window
+	switch (choice) {
+	case 1: return 7;
+	case 2: return 2;
+	case 3: return 11;
+	case 4: return 6;
+	case 5: return 4;
+	default: return 7;
+	}
+}
+
+void setColor(int colorCode) {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	// Changes the text attributes to your number code
 	SetConsoleTextAttribute(hConsole, colorCode);
 }
